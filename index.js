@@ -63,7 +63,7 @@ class IPFS {
 
             //clear timeout and return
             clearInterval(timer);
-            return true;
+            resolve(true);
         });
     }
 
@@ -128,6 +128,16 @@ class IPFS {
         let url = this._base + 'pin/ls/' + cid;
         let response = JSON.parse((await got.post(url)).body);
         return (response.Type === undefined); //Type will equal "error" if not pinned and be not present if pinned
+    }
+
+    /**
+     * returns a list of all pinned cids
+     * @return {Promise<string[]>}
+     */
+    async listPinned() {
+        let url= this._base + 'pin/ls';
+        let response = JSON.parse((await got.post(url)).body);
+        return response.Keys;
     }
 
     /**
