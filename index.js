@@ -68,6 +68,17 @@ class IPFS {
     }
 
     /**
+     * Removes the pin on a file
+     * @param cid
+     * @return {Promise<void>}
+     */
+    async pinRemove(cid) {
+        //get desired stats
+        let url = this._base + 'pin/rm/' + cid;
+        await got.post(url);
+    }
+
+    /**
      * Returns the data in an object
      * @param {string}  cid
      * @param {int}     timeout
@@ -81,12 +92,16 @@ class IPFS {
             }, timeout);
 
             //get desired stats
-            let url = this._base + 'cat/' + cid;
-            let response=(await got.post(url)).body;
+            try {
+                let url = this._base + 'cat/' + cid;
+                let response = (await got.post(url)).body;
+                resolve(response);
+            } catch (e) {
+                reject(e);
+            }
 
             //clear timeout and return
             clearInterval(timer);
-            resolve(response);
         });
     }
 
@@ -120,6 +135,24 @@ class IPFS {
 
 
     /**
+     * Adds a json file and returns its cid
+     * @param {Buffer}  data
+     * @return {Promise<string>}
+     */
+    async addBuffer(data) {
+        let form = new FormData();
+        form.append('path', data);
+
+        let url = this._base + 'add?pin=true&hash=sha2-256';
+        let response = (await got.post(url, {
+            headers: form.getHeaders(),
+            body: form
+        })).body;
+        return JSON.parse(response).Hash;
+    }
+
+
+    /**
      * Returns if a cid is pinned or not
      * @param {string}  cid
      * @return {Promise<boolean>}
@@ -137,6 +170,7 @@ class IPFS {
     async listPinned() {
         let url= this._base + 'pin/ls';
         let response = JSON.parse((await got.post(url)).body);
+        // noinspection JSUnresolvedVariable
         return response.Keys;
     }
 
