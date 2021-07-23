@@ -59,11 +59,12 @@ class IPFS {
 
             //get desired stats
             let url = this._base + 'pin/add/' + cid;
-            await got.post(url);
+            let response=await got.post(url);
+            let {Pins}=JSON.parse(response.body);
 
             //clear timeout and return
             clearInterval(timer);
-            resolve(true);
+            resolve(Pins[0]===cid);
         });
     }
 
