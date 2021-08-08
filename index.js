@@ -134,7 +134,6 @@ class IPFS {
         return JSON.parse(response).Hash;
     }
 
-
     /**
      * Adds a json file and returns its cid
      * @param {Buffer}  data
@@ -196,6 +195,24 @@ class IPFS {
             //clear timeout and return
             clearInterval(timer);
             resolve(response.CumulativeSize);
+        });
+    }
+
+    async addPeer(location, timeout = 600000) {
+        return new Promise(async (resolve, reject) => {
+            //handle timeouts
+            let timer = setTimeout(() => {
+                reject("connecting to peer " + location + " timed out");
+            }, timeout);
+
+            //get desired stats
+            let url = this._base + 'swarm/connect?arg=' + location;
+            let response = JSON.parse((await got.post(url)).body);
+
+            //clear timeout and return
+            clearInterval(timer);
+            // noinspection JSUnresolvedVariable
+            resolve(response.Strings[0].endsWith("success"));
         });
     }
 }
