@@ -1,6 +1,6 @@
 {
   "name": "ipfs-simple",
-  "version": "0.0.10",
+  "version": "0.0.12",
   "description": "Simple IPFS interface",
   "keywords": [],
   "author": "Matthew Cornelisse",

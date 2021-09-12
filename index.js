@@ -83,9 +83,9 @@ class IPFS {
      * Returns the data in an object
      * @param {string}  cid
      * @param {int}     timeout
-     * @return {Promise<string>}
+     * @return {Promise<Buffer>}
      */
-    async cat(cid, timeout = 600000) {
+    async catBuffer(cid, timeout = 600000) {
         return new Promise(async (resolve, reject) => {
             //handle timeouts
             let timer = setTimeout(() => {
@@ -95,7 +95,9 @@ class IPFS {
             //get desired stats
             try {
                 let url = this._base + 'cat/' + cid;
-                let response = (await got.post(url)).body;
+                let response = (await got.post(url,{
+                    responseType:"buffer"
+                })).body;
                 resolve(response);
             } catch (e) {
                 reject(e);
@@ -104,6 +106,16 @@ class IPFS {
             //clear timeout and return
             clearInterval(timer);
         });
+    }
+
+    /**
+     * Returns the data in an object
+     * @param {string}  cid
+     * @param {int}     timeout
+     * @return {Promise<string>}
+     */
+    async cat(cid, timeout = 600000) {
+        return (await this.catBuffer(cid,timeout)).toString();
     }
 
     /**
@@ -213,6 +225,14 @@ class IPFS {
             clearInterval(timer);
             // noinspection JSUnresolvedVariable
             resolve(response.Strings[0].endsWith("success"));
+        });
+    }
+
+    async getId() {
+        return new Promise(async (resolve, reject) => {
+            let url = this._base + 'id';
+            let response = JSON.parse((await got.post(url)).body);
+            resolve(response);
         });
     }
 }
