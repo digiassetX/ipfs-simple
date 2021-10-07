@@ -1,6 +1,6 @@
 const got=require('got');
 const FormData = require('form-data');
-const CID = require('cids');
+const {CID} = require('multiformats');
 
 class IPFS {
     /**
