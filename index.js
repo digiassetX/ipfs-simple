@@ -24,7 +24,7 @@ class IPFS {
      * @return {string}
      */
     cidToHash(cidString) {
-        const cid = new CID(cidString);
+        const cid = CID.parse(cidString);
         //get hash
         let hash = "";
         for (let i = 4; i < 36; i++) hash += cid.bytes[i].toString(16).padStart(2, '0');
@@ -39,8 +39,9 @@ class IPFS {
      */
     hashToCid(hash) {
         const hashPrefix = "1220";
-        // noinspection JSCheckFunctionSignatures
-        const cid = new CID(1, 'raw', Uint8Array.from(Buffer.from(hashPrefix + hash, 'hex')));
+        const cid = CID.create(1, 0x55, {
+            bytes: Uint8Array.from(Buffer.from(hashPrefix + hash, 'hex'))
+        });
         return cid.toString();
     }
 
