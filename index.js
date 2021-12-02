@@ -304,8 +304,12 @@ class IPFS_Simple {
         //use IPFS core if initialized
         while (this._creating) await sleep(100);
         if (this._coreMode) {
-            let response=await this._base.object.stat(CID.parse(cid),{timeout});
-            return response.CumulativeSize;
+            try {
+                let response = await this._base.object.stat(CID.parse(cid), {timeout});
+                return response.CumulativeSize;
+            } catch (e) {
+                return (await this.catBuffer(cid)).length;
+            }
         }
 
         //Use IPFS Desktop
