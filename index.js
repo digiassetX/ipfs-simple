@@ -88,8 +88,8 @@ class IPFS_Simple {
      */
     async pinAdd(cid, timeout = 600000) {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             let response=await this._base.pin.add(CID.parse(cid),{timeout});
             return (response.toString()===cid);
         }
@@ -119,8 +119,8 @@ class IPFS_Simple {
      */
     async pinRemove(cid) {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             await this._base.pin.rm(CID.parse(cid));
             return;
         }
@@ -138,8 +138,8 @@ class IPFS_Simple {
      */
     async catBuffer(cid, timeout = 600000) {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             let chunks=[];
             for await (const chunk of this._base.cat(cid,{timeout})) {
                 chunks.push(...chunk);
@@ -198,8 +198,8 @@ class IPFS_Simple {
      */
     async addRawJSON(json) {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             let response=await this._base.add(Buffer.from(JSON.stringify(json), 'utf8'),{
                 pin:        true,
                 rawLeaves:  true,
@@ -227,8 +227,8 @@ class IPFS_Simple {
      */
     async addBuffer(data) {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             let response=await this._base.add(data,{
                 pin:        true,
                 hashAlg:    'sha2-256'
@@ -256,8 +256,8 @@ class IPFS_Simple {
      */
     async checkPinned(cid) {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             for await (const response of this._base.pin.ls({
                 paths: CID.parse(cid)
             })) {
@@ -278,8 +278,8 @@ class IPFS_Simple {
      */
     async listPinned() {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             let responses=[];
             for await (const { cid, type } of this._base.pin.ls()) {
                 responses.push(cid.toString());
@@ -302,8 +302,8 @@ class IPFS_Simple {
      */
     async getSize(cid, timeout = 600000) {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             let response=await this._base.object.stat(CID.parse(cid),{timeout});
             return response.CumulativeSize;
         }
@@ -334,8 +334,8 @@ class IPFS_Simple {
      */
     async addPeer(location, timeout = 600000) {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             await this._base.swarm.connect(location,{timeout});
             return;
         }
@@ -365,8 +365,8 @@ class IPFS_Simple {
      */
     async getId() {
         //use IPFS core if initialized
+        while (this._creating) await sleep(100);
         if (this._coreMode) {
-            while (this._creating) await sleep(100);
             return this._base.id();
         }
 

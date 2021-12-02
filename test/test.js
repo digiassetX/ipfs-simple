@@ -45,5 +45,9 @@ describe("CID manipulation",function() {
     it('check digibyte logo is pinned',async function() {
         let pinned=await simple.checkPinned("QmSAcz2H7veyeuuSyACLkSj9ts9EWm1c9v7uTqbHynsVbj");
         expect(pinned).to.equal(true);
-    })
+    });
+    it('get size of digibyte logo',async function() {
+        let size=await simple.getSize("QmSAcz2H7veyeuuSyACLkSj9ts9EWm1c9v7uTqbHynsVbj");
+        expect(size).to.equal(103368);
+    });
 });
