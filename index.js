@@ -205,7 +205,7 @@ class IPFS_Simple {
                 rawLeaves:  true,
                 hashAlg:    'sha2-256'
             });
-            return response.cid;
+            return response.cid.toString();
         }
 
         //Use IPFS Desktop
@@ -233,7 +233,7 @@ class IPFS_Simple {
                 pin:        true,
                 hashAlg:    'sha2-256'
             });
-            return response.cid;
+            return response.cid.toString();
         }
 
         //Use IPFS Desktop
