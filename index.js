@@ -1,21 +1,56 @@
+const IPFS=require('ipfs-core');
 const got=require('got');
 const FormData = require('form-data');
 const {CID} = require('multiformats');
+const sleep=require("sleep-promise");
 
-class IPFS {
+class IPFS_Simple {
     /**
      * Creates the IPFS object.  Path can be changed with path setter
      */
     constructor() {
         this._base="http://127.0.0.1:5001/api/v0/";
+        this._coreMode=false;
+        this._creating=false;
+    }
+
+    /**
+     * Creates an IPFS objects instead of using path
+     * @returns {Promise<void>}
+     */
+    async create() {
+        this._creating=true;
+        this._base=await IPFS.create();
+        this._creating=false;
+        this._coreMode=true;
+    }
+
+    /**
+     * returns the objects core
+     * @returns {string|IPFS}
+     */
+    get core() {
+        return this._base;
+    }
+
+    /**
+     * Sets up ipfs object to use a specific core
+     * @param {string|IPFS} core
+     * @returns {Promise<void>}
+     */
+    async init(core) {
+        this._base=core;
+        this._coreMode=(typeof core!=="string");
     }
 
     /**
      * Sets the path to IPFS interface
+     * @deprecated
      * @param {string}  path
      */
     set path(path) {
-        this._base=path
+        this._base=path;
+        this._coreMode=false;
     }
 
     /**
@@ -52,6 +87,14 @@ class IPFS {
      * @return {Promise<boolean>}
      */
     async pinAdd(cid, timeout = 600000) {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            let response=await this._base.pin.add(CID.parse(cid),{timeout});
+            return (response.toString()===cid);
+        }
+
+        //Use IPFS Desktop
         return new Promise(async (resolve, reject) => {
             //handle timeouts
             let timer = setTimeout(() => {
@@ -75,7 +118,14 @@ class IPFS {
      * @return {Promise<void>}
      */
     async pinRemove(cid) {
-        //get desired stats
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            await this._base.pin.rm(CID.parse(cid));
+            return;
+        }
+
+        //Use IPFS Desktop
         let url = this._base + 'pin/rm/' + cid;
         await got.post(url);
     }
@@ -87,6 +137,17 @@ class IPFS {
      * @return {Promise<Buffer>}
      */
     async catBuffer(cid, timeout = 600000) {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            let chunks=[];
+            for await (const chunk of this._base.cat(cid,{timeout})) {
+                chunks.push(...chunk);
+            }
+            return Buffer.from(chunks);
+        }
+
+        //Use IPFS Desktop
         return new Promise(async (resolve, reject) => {
             //handle timeouts
             let timer = setTimeout(() => {
@@ -136,6 +197,18 @@ class IPFS {
      * @return {Promise<string>}
      */
     async addRawJSON(json) {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            let response=await this._base.add(Buffer.from(JSON.stringify(json), 'utf8'),{
+                pin:        true,
+                rawLeaves:  true,
+                hashAlg:    'sha2-256'
+            });
+            return response.cid;
+        }
+
+        //Use IPFS Desktop
         let form = new FormData();
         form.append('path', Buffer.from(JSON.stringify(json), 'utf8'));
 
@@ -153,6 +226,17 @@ class IPFS {
      * @return {Promise<string>}
      */
     async addBuffer(data) {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            let response=await this._base.add(data,{
+                pin:        true,
+                hashAlg:    'sha2-256'
+            });
+            return response.cid;
+        }
+
+        //Use IPFS Desktop
         let form = new FormData();
         form.append('path', data);
 
@@ -171,6 +255,18 @@ class IPFS {
      * @return {Promise<boolean>}
      */
     async checkPinned(cid) {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            for await (const response of this._base.pin.ls({
+                paths: CID.parse(cid)
+            })) {
+                if (response.cid.toString()===cid) return true;
+            }
+            return false;
+        }
+
+        //Use IPFS Desktop
         let url = this._base + 'pin/ls/' + cid;
         let response = JSON.parse((await got.post(url)).body);
         return (response.Type === undefined); //Type will equal "error" if not pinned and be not present if pinned
@@ -181,6 +277,17 @@ class IPFS {
      * @return {Promise<string[]>}
      */
     async listPinned() {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            let responses=[];
+            for await (const { cid, type } of this._base.pin.ls()) {
+                responses.push(cid.toString());
+            }
+            return responses;
+        }
+
+        //Use IPFS Desktop
         let url= this._base + 'pin/ls';
         let response = JSON.parse((await got.post(url)).body);
         // noinspection JSUnresolvedVariable
@@ -194,6 +301,14 @@ class IPFS {
      * @return {Promise<int>}
      */
     async getSize(cid, timeout = 600000) {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            let response=await this._base.object.stat(CID.parse(cid),{timeout});
+            return response.CumulativeSize;
+        }
+
+        //Use IPFS Desktop
         return new Promise(async (resolve, reject) => {
             //handle timeouts
             let timer = setTimeout(() => {
@@ -211,7 +326,21 @@ class IPFS {
         });
     }
 
+    /**
+     * Trys to connect to a peer
+     * @param {string}  location
+     * @param {int} timeout
+     * @returns {Promise<void>}
+     */
     async addPeer(location, timeout = 600000) {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            await this._base.swarm.connect(location,{timeout});
+            return;
+        }
+
+        //Use IPFS Desktop
         return new Promise(async (resolve, reject) => {
             //handle timeouts
             let timer = setTimeout(() => {
@@ -229,7 +358,19 @@ class IPFS {
         });
     }
 
+    /**
+     * Gets the id
+     * Warning the core and desktop return in different formats
+     * @returns {Promise<unknown>}
+     */
     async getId() {
+        //use IPFS core if initialized
+        if (this._coreMode) {
+            while (this._creating) await sleep(100);
+            return this._base.id();
+        }
+
+        //Use IPFS Desktop
         return new Promise(async (resolve, reject) => {
             let url = this._base + 'id';
             let response = JSON.parse((await got.post(url)).body);
@@ -239,5 +380,5 @@ class IPFS {
 }
 
 
-const singularity=new IPFS();
+const singularity=new IPFS_Simple();
 module.exports=singularity;
