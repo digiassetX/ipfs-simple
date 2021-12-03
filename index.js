@@ -142,9 +142,9 @@ class IPFS_Simple {
         if (this._coreMode) {
             let chunks=[];
             for await (const chunk of this._base.cat(cid,{timeout})) {
-                chunks.push(...chunk);
+                chunks.push(chunk);
             }
-            return Buffer.from(chunks);
+            return Buffer.concat(chunks);
         }
 
         //Use IPFS Desktop
