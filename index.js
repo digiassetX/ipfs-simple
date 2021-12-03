@@ -38,7 +38,7 @@ class IPFS_Simple {
      * @param {string|IPFS} core
      * @returns {Promise<void>}
      */
-    async init(core) {
+    init(core) {
         this._base=core;
         this._coreMode=(typeof core!=="string");
     }
